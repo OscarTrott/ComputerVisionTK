@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from BackgroundEstimation import BackgroundEstimator
 
 class Tools:
     def __init__(self):
@@ -20,15 +21,12 @@ class Tools:
         self.color = np.random.randint(0, 255, (100, 3))
 
 
-
     def imageShower(self):
         # Our operations on the frame come here
         gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
 
         # Display the resulting frame
         cv2.imshow('image', gray)
-
-
 
 
     def edgeDetector_opencv(self):
@@ -92,6 +90,10 @@ class Tools:
         self.hsv = np.zeros_like(self.frame)
         self.hsv[..., 1] = 255
 
+        background = BackgroundEstimator()
+
+        background.initialise(self.frame)
+
         while (True):
             # Set the last captured frame to the last frame
             self.lastFrame = self.frame
@@ -99,9 +101,11 @@ class Tools:
             # Capture frame-by-frame
             self.ret, self.frame = cap.read()
 
-            #self.imageShower()             # Display the base image
-            #self.edgeDetector_opencv()     # Display the detected edge
-            #self.opticalFlow_opencv()      # Display optical flow
+            self.frame = background.estimateBackground(self.frame)
+
+            self.imageShower()             # Display the base image
+            self.edgeDetector_opencv()     # Display the detected edge
+            self.opticalFlow_opencv()      # Display optical flow
             self.denseOpticalFlow_ocv()    # Display dense optical flow
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
