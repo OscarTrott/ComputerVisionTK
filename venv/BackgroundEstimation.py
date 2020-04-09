@@ -1,22 +1,37 @@
 import numpy as np
+import cv2
 
 class BackgroundEstimator:
     def __init__(self):
-        self.histWeight = 0.5
-        self.devWeight = 0.2
+        self.histWeight = 0.99
+        self.devWeight = 0.95
+
+        self.sigmas = 0.5
 
     def initialise(self, firstImg):
         self.avImg = np.asarray(firstImg)
+        self.delta = np.ones_like(self.avImg)
 
     def estimateBackground(self, img):
-        newWeight = 1 - self.histWeight
+        newHistWeight = 1 - self.histWeight
+        newDevWeight = 1 - self.devWeight
 
-        self.avImg = newWeight * np.asarray(img) + self.histWeight * self.avImg
+        imgArray = np.asarray(img)
 
-        delta = pow(self.avImg - img,  2) * self.devWeight
+        self.avImg = newHistWeight * imgArray + self.histWeight * self.avImg
+        self.avImg = self.avImg.astype(np.uint8)
+
+        self.delta = pow(self.avImg - imgArray,  2) * newDevWeight + self.devWeight * self.delta
+        self.delta = self.delta.astype(np.uint8)
 
         resImg = self.avImg
-        resImg = img[np.where(img[:,:] < self.avImg[:,:] + delta[:,:])]
-        resImg = img[np.where(img[:,:] > self.avImg[:,:] - delta[:,:])]
+        resImg = np.zeros_like(self.avImg)
+        resImg = np.where(imgArray > self.avImg + self.sigmas * self.delta, imgArray, resImg)
+        resImg = np.where(imgArray < self.avImg - self.sigmas * self.delta, imgArray, resImg)
 
-        return resImg.astype(np.uint8)
+        cv2.imshow('delta', self.delta)
+        cv2.imshow('average', self.avImg)
+        cv2.imshow('average+delta', self.avImg + self.delta)
+        cv2.imshow('average-delta', self.avImg - self.delta)
+
+        return resImg

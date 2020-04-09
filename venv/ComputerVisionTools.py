@@ -22,15 +22,13 @@ class Tools:
 
 
     def imageShower(self):
-        # Our operations on the frame come here
-        gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
-
+        # Our operations on the frame_grey come here
         # Display the resulting frame
-        cv2.imshow('image', gray)
+        cv2.imshow('image', self.frame_grey)
 
 
     def edgeDetector_opencv(self):
-        edges = cv2.Canny(self.frame, 100, 200)
+        edges = cv2.Canny(self.frame_grey, 100, 200)
 
         # Display the resulting frame
         cv2.imshow('edgeDet', edges)
@@ -40,15 +38,12 @@ class Tools:
 
     def opticalFlow_opencv(self):
         # Create a mask image for drawing purposes
-        mask = np.zeros_like(self.lastFrame)
+        mask = np.zeros_like(self.lastFrame_RGB )
 
-        lastFrame_grey = cv2.cvtColor(self.lastFrame, cv2.COLOR_BGR2GRAY)
-        thisFrame_grey = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
-
-        p0 = cv2.goodFeaturesToTrack(lastFrame_grey, mask=None, **self.feature_params)
+        p0 = cv2.goodFeaturesToTrack(self.lastFrame_grey , mask=None, **self.feature_params)
 
         # calculate optical flow
-        p1, st, err = cv2.calcOpticalFlowPyrLK(lastFrame_grey, thisFrame_grey, p0, None, **self.lk_params)
+        p1, st, err = cv2.calcOpticalFlowPyrLK(self.lastFrame_grey , self.frame_grey, p0, None, **self.lk_params)
 
         # Select good points
         good_new = p1[st == 1]
@@ -59,7 +54,7 @@ class Tools:
             a, b = new.ravel()
             c, d = old.ravel()
             mask = cv2.line(mask, (a, b), (c, d), self.color[i].tolist(), 2)
-            frame = cv2.circle(self.frame, (a, b), 5, self.color[i].tolist(), -1)
+            frame = cv2.circle(self.lastFrame_RGB, (a, b), 5, self.color[i].tolist(), -1)
 
         img = cv2.add(frame, mask)
 
@@ -68,10 +63,7 @@ class Tools:
 
     def denseOpticalFlow_ocv(self):
 
-        lastFrame_grey = cv2.cvtColor(self.lastFrame, cv2.COLOR_BGR2GRAY)
-        thisFrame_grey = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
-
-        flow = cv2.calcOpticalFlowFarneback(lastFrame_grey, thisFrame_grey, None, 0.5, 3, 5, 3, 2, 1.2, 0)
+        flow = cv2.calcOpticalFlowFarneback(self.lastFrame_grey , self.frame_grey, None, 0.5, 3, 5, 3, 2, 1.2, 0)
 
         mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
         self.hsv[..., 0] = ang * 180 / np.pi / 2
@@ -85,23 +77,26 @@ class Tools:
     def start(self):
 
         cap = cv2.VideoCapture(0)
-        self.ret, self.frame = cap.read()
+        self.ret, self.frame_RGB = cap.read()
+        self.frame_grey = cv2.cvtColor(self.frame_RGB, cv2.COLOR_BGR2GRAY)
 
-        self.hsv = np.zeros_like(self.frame)
+        self.hsv = np.zeros_like(self.frame_RGB)
         self.hsv[..., 1] = 255
 
         background = BackgroundEstimator()
 
-        background.initialise(self.frame)
+        background.initialise(self.frame_grey)
 
         while (True):
-            # Set the last captured frame to the last frame
-            self.lastFrame = self.frame
+            # Set the last captured frame_grey to the last frame
+            self.lastFrame_grey  = self.frame_grey
+            self.lastFrame_RGB = self.frame_RGB
 
             # Capture frame-by-frame
-            self.ret, self.frame = cap.read()
+            self.ret, self.frame_RGB = cap.read()
+            self.frame_grey = cv2.cvtColor(self.frame_RGB, cv2.COLOR_BGR2GRAY)
 
-            self.frame = background.estimateBackground(self.frame)
+            self.frame_grey = background.estimateBackground(self.frame_grey)
 
             self.imageShower()             # Display the base image
             self.edgeDetector_opencv()     # Display the detected edge
