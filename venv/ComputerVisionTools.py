@@ -84,7 +84,6 @@ class Tools:
         self.hsv[..., 1] = 255
 
         background = BackgroundEstimator()
-
         background.initialise(self.frame_grey)
 
         while (True):

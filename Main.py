@@ -1,6 +1,17 @@
-
 from ComputerVisionTools import Tools
+from TaylorSeriesApproximation import TaylorSeriesApproximator
 
-opticalFlowTest = Tools()
+opticalFlow = False
+taylorSeriesApproximation = True
 
-opticalFlowTest.start()
+if opticalFlow:
+    runner = Tools()
+
+    runner.start()
+
+# ---------------------------
+# Taylor series approximation
+if taylorSeriesApproximation:
+    runner = TaylorSeriesApproximator()
+
+    runner.start()

@@ -2,11 +2,13 @@ import numpy as np
 import cv2
 
 class BackgroundEstimator:
+    """ Background estimator class
+        builds up a statistical representation of the background and allows for it to be removed from captured frames"""
     def __init__(self):
         self.histWeight = 0.99
         self.devWeight = 0.95
 
-        self.sigmas = 0.5
+        self.sigmas = 1
 
     def initialise(self, firstImg):
         self.avImg = np.asarray(firstImg)
@@ -25,7 +27,7 @@ class BackgroundEstimator:
         self.delta = self.delta.astype(np.uint8)
 
         resImg = self.avImg
-        resImg = np.zeros_like(self.avImg)
+        #resImg = np.zeros_like(self.avImg)
         resImg = np.where(imgArray > self.avImg + self.sigmas * self.delta, imgArray, resImg)
         resImg = np.where(imgArray < self.avImg - self.sigmas * self.delta, imgArray, resImg)
 
