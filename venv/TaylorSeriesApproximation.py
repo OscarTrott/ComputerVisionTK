@@ -28,10 +28,35 @@ class TaylorSeriesApproximator:
         c = rec1Colour.tolist()
 
         # Draw a rectangle
-        img = cv2.rectangle(img, a, b, c, 3)
+        origimg = cv2.rectangle(img, a, b, c, -1)
+        origimg = cv2.GaussianBlur(origimg, (5, 5), 0)
+
+        cv2.imshow("TaylorSeriesWin", origimg)
+        cv2.waitKey(1000000000)
+
+        img = self.findXDerivation(origimg)
+
+        cv2.imshow("TaylorSeriesWin", img)
+        cv2.waitKey(1000000000)
+
+        img = self.findYDerivation(img)
 
         # Show the result
         cv2.imshow("TaylorSeriesWin", img)
 
         # Wait for a key to be pressed before closing the window
         cv2.waitKey(1000000000)
+
+    def findXDerivation(self, img):
+        derivImg = np.zeros((img.shape[0], img.shape[1]-1, img.shape[2]), np.float)
+
+        derivImg[:,:,:] = img[:, :-1, :] - img[:, 1:, :]
+
+        return abs(derivImg)
+
+    def findYDerivation(self, img):
+        derivImg = np.zeros((img.shape[0]-1, img.shape[1], img.shape[2]), np.float)
+
+        derivImg[:,:,:] = img[:-1, :, :] - img[1:, :, :]
+
+        return abs(derivImg)
